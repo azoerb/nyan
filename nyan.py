@@ -3,7 +3,6 @@ import os
 import sys
 import time
 import math
-from copy import copy
 
 nyan_frames = [
     [
@@ -12,12 +11,13 @@ nyan_frames = [
         r'~|__( ^ .^)',
         r'  ""  ""   ',
     ],[
-        r'-,------, ',
-        r'-|  /\_/\ ',
-        r'-|_( ^ .^)',
-        r' ""  ""   ',
+        r'-,------,  ',
+        r'-|  /\_/\  ',
+        r'-|_( ^ .^) ',
+        r' ""  ""    ',
     ],
 ]
+nyan_height = len(nyan_frames[0])
 
 def clear():
     os.system('tput reset')
@@ -43,35 +43,41 @@ def get_rainbow_colors(rainbow_length):
 
     return colors
 
+def clear_buffer(length=nyan_height):
+    return [[] for x in xrange(nyan_height)]
+
 initial_frame = True
 rainbow_length = 10
 terminal_width = map(int, os.popen('stty size', 'r').read().split())[1]
 colors = get_rainbow_colors(terminal_width)
-nyan_height = len(nyan_frames[0])
-draw_buffer = [copy([])] * nyan_height
+draw_buffer = clear_buffer()
+
+def split_buffer():
+    cutoff = terminal_width
+    for line in range(len(draw_buffer)):
+        draw_buffer[line] = [draw_buffer[line][x:x+cutoff] for x in xrange(0, len(draw_buffer[line]), cutoff)]
 
 while True:
     clear()
+    terminal_width = map(int, os.popen('stty size', 'r').read().split())[1]
 
     for line in range(nyan_height):
         is_underscore = initial_frame
         for i in range(rainbow_length):
-            color = colors[i * 100 / rainbow_length]
+            color = colors[i * terminal_width / rainbow_length]
             line_mod = line % 2 == 1
-            if is_underscore and line_mod or not is_underscore and not line_mod:
-                char = '_'
-            else:
-                char = '-'
-            # draw_buffer[line].append(get_print_color(char, color[0], color[1], color[2]))
-            print(get_print_color(char, color[0], color[1], color[2]), end='')
+            char = '_' if is_underscore ^ line_mod else '-'
+            draw_buffer[line].append(get_print_color(char, color[0], color[1], color[2]))
             is_underscore = not is_underscore
 
-        # draw_buffer[line].append(get_nyan_frame(initial_frame, line))
-        # draw_buffer[line].append("\n")
-        print(get_nyan_frame(initial_frame, line))
-        # print(line)
-        # [print(char, end='') for char in draw_buffer[line]]
+        [draw_buffer[line].append(char) for char in get_nyan_frame(initial_frame, line)]
+        draw_buffer[line].append("\n")
 
+    split_buffer()
+
+    for idx in xrange(len(draw_buffer[0])):
+        for line in xrange(len(draw_buffer)):
+            [print(char, end='') for char in draw_buffer[line][idx]]
     # while len(draw_buffer[nyan_height-1]):
     #     for line in range(nyan_height):
     #         for index, char in enumerate(draw_buffer[line]):
@@ -84,7 +90,7 @@ while True:
     #                 # print(draw_buffer[line])
     #                 sys.exit()
 
-    draw_buffer = [copy([])] * nyan_height
+    draw_buffer = clear_buffer()
     initial_frame = not initial_frame
     rainbow_length += 1
-    time.sleep(0.25)
+    time.sleep(0.1)
