@@ -44,27 +44,30 @@ def get_rainbow_colors(rainbow_length):
     return colors
 
 def clear_buffer(length=nyan_height):
-    return [[] for x in xrange(nyan_height)]
+    return [[] for x in range(nyan_height)]
+
+def get_terminal_width():
+    return int(os.popen('stty size', 'r').read().split()[1])
 
 initial_frame = True
 rainbow_length = 10
-terminal_width = map(int, os.popen('stty size', 'r').read().split())[1]
+terminal_width = get_terminal_width()
 colors = get_rainbow_colors(terminal_width)
 draw_buffer = clear_buffer()
 
 def split_buffer():
     cutoff = terminal_width
     for line in range(len(draw_buffer)):
-        draw_buffer[line] = [draw_buffer[line][x:x+cutoff] for x in xrange(0, len(draw_buffer[line]), cutoff)]
+        draw_buffer[line] = [draw_buffer[line][x:x+cutoff] for x in range(0, len(draw_buffer[line]), cutoff)]
 
 while True:
     clear()
-    terminal_width = map(int, os.popen('stty size', 'r').read().split())[1]
+    terminal_width = get_terminal_width()
 
     for line in range(nyan_height):
         is_underscore = initial_frame
         for i in range(rainbow_length):
-            color = colors[i * terminal_width / rainbow_length]
+            color = colors[int(i * terminal_width / rainbow_length)]
             line_mod = line % 2 == 1
             char = '_' if is_underscore ^ line_mod else '-'
             draw_buffer[line].append(get_print_color(char, color[0], color[1], color[2]))
@@ -75,20 +78,9 @@ while True:
 
     split_buffer()
 
-    for idx in xrange(len(draw_buffer[0])):
-        for line in xrange(len(draw_buffer)):
+    for idx in range(len(draw_buffer[0])):
+        for line in range(len(draw_buffer)):
             [print(char, end='') for char in draw_buffer[line][idx]]
-    # while len(draw_buffer[nyan_height-1]):
-    #     for line in range(nyan_height):
-    #         for index, char in enumerate(draw_buffer[line]):
-    #             if index < terminal_width:
-    #                 print(char, end='')
-    #             else:
-    #                 print("HIHSHGKSG")
-    #                 # print(draw_buffer[line])
-    #                 # draw_buffer[line] = draw_buffer[line][index:]
-    #                 # print(draw_buffer[line])
-    #                 sys.exit()
 
     draw_buffer = clear_buffer()
     initial_frame = not initial_frame
